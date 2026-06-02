@@ -1,0 +1,8 @@
+id_avion,id_comp,cg_min,cg_max,L_X,L_Y,L_Z,Wmax,Ycomp
+Boeing747,Frontal,10.0,18.0,4.0,8.0,3.0,4000,4.0
+Boeing747,Trasero,10.0,18.0,4.0,8.0,3.0,5000,14.0
+AirbusA330,Frontal,8.0,15.0,3.5,5.0,2.5,3000,3.0
+AirbusA330,Central,8.0,15.0,3.5,6.0,2.5,4000,9.0
+AirbusA330,Trasero,8.0,15.0,3.5,4.0,2.5,2500,16.0
+HerculesC130,BodegaUnica,5.0,12.0,3.0,12.0,2.8,15000,2.0
+CessnaCaravan,Principal,1.0,3.0,1.2,2.0,1.2,500,1.0
