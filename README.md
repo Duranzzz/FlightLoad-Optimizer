@@ -127,6 +127,7 @@ FlightLoad-Optimizer/
 │   └── Rubrica.txt               # Rúbrica de evaluación
 │
 ├── requirements.txt              # Dependencias Python (pip install -r requirements.txt)
+├── iniciar.bat                   # ⚡ Setup automático (doble clic para ejecutar)
 ├── .gitignore
 └── README.md                     # Este archivo
 ```
@@ -134,6 +135,15 @@ FlightLoad-Optimizer/
 ---
 
 ## ⚙️ Instalación Rápida
+
+### ⚡ Opción 1 — Un solo clic (Windows)
+
+Hacer **doble clic** en `iniciar.bat`. El script:
+1. Verifica que Python esté instalado
+2. Instala todas las dependencias automáticamente
+3. Levanta el servidor HTTP en `http://localhost:8080`
+
+### 🔧 Opción 2 — Manual
 
 ```bash
 # 1. Clonar el repositorio
