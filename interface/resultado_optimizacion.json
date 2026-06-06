@@ -1,0 +1,183 @@
+{
+    "avion": "AirbusA330",
+    "valor_total_optimizado": 10249.9755,
+    "compartimientos": [
+        {
+            "id_comp": "Frontal",
+            "L_X": 3.5,
+            "L_Y": 5.0,
+            "L_Z": 2.5,
+            "Ycomp": 3.0
+        },
+        {
+            "id_comp": "Central",
+            "L_X": 3.5,
+            "L_Y": 6.0,
+            "L_Z": 2.5,
+            "Ycomp": 9.0
+        },
+        {
+            "id_comp": "Trasero",
+            "L_X": 3.5,
+            "L_Y": 4.0,
+            "L_Z": 2.5,
+            "Ycomp": 16.0
+        }
+    ],
+    "cajas_cargadas": [
+        {
+            "id_caja": "C1",
+            "compartimiento": "Frontal",
+            "x": 0.0,
+            "y": 4.000000000000002,
+            "z": 0.5,
+            "dx": 1.0,
+            "dy": 1.0,
+            "dz": 1.0,
+            "peso": 150,
+            "valor": 500
+        },
+        {
+            "id_caja": "C2",
+            "compartimiento": "Central",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.5,
+            "dx": 2.0,
+            "dy": 1.5,
+            "dz": 1.0,
+            "peso": 250,
+            "valor": 800
+        },
+        {
+            "id_caja": "C3",
+            "compartimiento": "Frontal",
+            "x": 2.0,
+            "y": 2.0,
+            "z": 0.0,
+            "dx": 0.5,
+            "dy": 0.5,
+            "dz": 0.5,
+            "peso": 80,
+            "valor": 1200
+        },
+        {
+            "id_caja": "C4",
+            "compartimiento": "Frontal",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "dx": 3.0,
+            "dy": 2.0,
+            "dz": 2.0,
+            "peso": 600,
+            "valor": 150
+        },
+        {
+            "id_caja": "C5",
+            "compartimiento": "Central",
+            "x": 2.0000000000000018,
+            "y": 0.0,
+            "z": 0.0,
+            "dx": 1.2,
+            "dy": 1.2,
+            "dz": 1.2,
+            "peso": 200,
+            "valor": 600
+        },
+        {
+            "id_caja": "C6",
+            "compartimiento": "Central",
+            "x": 0.0,
+            "y": 2.0,
+            "z": 0.0,
+            "dx": 2.5,
+            "dy": 3.0,
+            "dz": 2.0,
+            "peso": 800,
+            "valor": 2500
+        },
+        {
+            "id_caja": "C7",
+            "compartimiento": "Trasero",
+            "x": 1.5000000000000013,
+            "y": 3.0,
+            "z": 0.0,
+            "dx": 0.8,
+            "dy": 0.8,
+            "dz": 0.8,
+            "peso": 50,
+            "valor": 100
+        },
+        {
+            "id_caja": "C8",
+            "compartimiento": "Central",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "dx": 1.5,
+            "dy": 2.0,
+            "dz": 1.5,
+            "peso": 400,
+            "valor": 900
+        },
+        {
+            "id_caja": "C9",
+            "compartimiento": "Trasero",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0,
+            "dx": 1.0,
+            "dy": 3.0,
+            "dz": 1.0,
+            "peso": 300,
+            "valor": 700
+        },
+        {
+            "id_caja": "C11",
+            "compartimiento": "Frontal",
+            "x": 0.0,
+            "y": 2.5,
+            "z": 0.0,
+            "dx": 0.6,
+            "dy": 0.6,
+            "dz": 0.5,
+            "peso": 120,
+            "valor": 2000
+        },
+        {
+            "id_caja": "C12",
+            "compartimiento": "Frontal",
+            "x": 0.0,
+            "y": 2.0000000000000018,
+            "z": 0.5,
+            "dx": 2.0,
+            "dy": 2.0,
+            "dz": 2.0,
+            "peso": 500,
+            "valor": 450
+        },
+        {
+            "id_caja": "C13",
+            "compartimiento": "Trasero",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "dx": 1.5,
+            "dy": 1.0,
+            "dz": 1.0,
+            "peso": 180,
+            "valor": 350
+        }
+    ],
+    "cajas_no_cargadas": [
+        {
+            "id_caja": "C10",
+            "dx": 4.0,
+            "dy": 4.0,
+            "dz": 2.5,
+            "peso": 1200,
+            "valor": 3000
+        }
+    ]
+}
