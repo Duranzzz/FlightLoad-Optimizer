@@ -1,0 +1,237 @@
+
+
+# ----------------------------------------------------------------------
+import pandas as pd
+import pyomo.environ as pyo
+from pyomo.opt import SolverFactory
+import json
+
+def optimizar_carga_avion(ruta_cajas, ruta_aviones, avion_seleccionado):
+    # ------------------------------------------------------------------
+    # 1. LECTURA Y PREPARACIÓN DE DATOS (PANDAS)
+    # ------------------------------------------------------------------
+    df_cajas = pd.read_csv(ruta_cajas)
+    df_aviones = pd.read_csv(ruta_aviones)
+
+    df_avion_actual = df_aviones[df_aviones['id_avion'] == avion_seleccionado]
+    if df_avion_actual.empty:
+        raise ValueError(f"El avión '{avion_seleccionado}' no existe en la base de datos.")
+
+    cg_min_global = df_avion_actual['cg_min'].iloc[0]
+    cg_max_global = df_avion_actual['cg_max'].iloc[0]
+
+    cajas_idx = df_cajas['id_caja'].tolist()
+    dict_dx = df_cajas.set_index('id_caja')['dx'].to_dict()
+    dict_dy = df_cajas.set_index('id_caja')['dy'].to_dict()
+    dict_dz = df_cajas.set_index('id_caja')['dz'].to_dict()
+    dict_w  = df_cajas.set_index('id_caja')['peso'].to_dict()
+    dict_val = df_cajas.set_index('id_caja')['valor'].to_dict()
+
+    comp_idx = df_avion_actual['id_comp'].tolist()
+    dict_LX = df_avion_actual.set_index('id_comp')['L_X'].to_dict()
+    dict_LY = df_avion_actual.set_index('id_comp')['L_Y'].to_dict()
+    dict_LZ = df_avion_actual.set_index('id_comp')['L_Z'].to_dict()
+    dict_Wmax = df_avion_actual.set_index('id_comp')['Wmax'].to_dict()
+    dict_Ycomp = df_avion_actual.set_index('id_comp')['Ycomp'].to_dict()
+
+    # ------------------------------------------------------------------
+    # 2, 3 y 4. MODELO, VARIABLES Y RESTRICCIONES (Sin cambios)
+    # ------------------------------------------------------------------
+    model = pyo.ConcreteModel(name=f"Optimizacion_{avion_seleccionado}")
+
+    model.I = pyo.Set(initialize=cajas_idx)
+    model.J = pyo.Set(initialize=comp_idx)
+    model.Pares = pyo.Set(initialize=[(i, k) for i in model.I for k in model.I if i < k])
+
+    model.dx = pyo.Param(model.I, initialize=dict_dx)
+    model.dy = pyo.Param(model.I, initialize=dict_dy)
+    model.dz = pyo.Param(model.I, initialize=dict_dz)
+    model.w  = pyo.Param(model.I, initialize=dict_w)
+    model.val = pyo.Param(model.I, initialize=dict_val)
+
+    model.L_X = pyo.Param(model.J, initialize=dict_LX)
+    model.L_Y = pyo.Param(model.J, initialize=dict_LY)
+    model.L_Z = pyo.Param(model.J, initialize=dict_LZ)
+    model.Wmax = pyo.Param(model.J, initialize=dict_Wmax)
+    model.Ycomp = pyo.Param(model.J, initialize=dict_Ycomp)
+
+    # Parámetros Globales
+    model.CG_min = pyo.Param(initialize=cg_min_global)
+    model.CG_max = pyo.Param(initialize=cg_max_global)
+    model.M = pyo.Param(initialize=50)
+
+    model.V = pyo.Var(model.I, model.J, within=pyo.Binary)
+    model.x = pyo.Var(model.I, within=pyo.NonNegativeReals)
+    model.y = pyo.Var(model.I, within=pyo.NonNegativeReals)
+    model.z = pyo.Var(model.I, within=pyo.NonNegativeReals)
+    model.Y_abs = pyo.Var(model.I, within=pyo.NonNegativeReals)
+
+    model.left  = pyo.Var(model.Pares, within=pyo.Binary)
+    model.right = pyo.Var(model.Pares, within=pyo.Binary)
+    model.front = pyo.Var(model.Pares, within=pyo.Binary)
+    model.back  = pyo.Var(model.Pares, within=pyo.Binary)
+    model.below = pyo.Var(model.Pares, within=pyo.Binary)
+    model.above = pyo.Var(model.Pares, within=pyo.Binary)
+
+    # Objetivo: Maximizar valor y aplicar gravedad
+    def obj_rule(model):
+        ganancia = sum(model.val[i] * model.V[i, j] for i in model.I for j in model.J)
+        # Una pequeña penalización para que las cajas vayan al suelo y a la pared
+        gravedad = 0.001 * sum(model.x[i] + model.y[i] + model.z[i] for i in model.I)
+        return ganancia - gravedad
+    model.Obj = pyo.Objective(rule=obj_rule, sense=pyo.maximize)
+
+    def unicidad_rule(model, i): return sum(model.V[i, j] for j in model.J) <= 1
+    model.C_Unicidad = pyo.Constraint(model.I, rule=unicidad_rule)
+
+    def peso_max_rule(model, j): return sum(model.w[i] * model.V[i, j] for i in model.I) <= model.Wmax[j]
+    model.C_PesoMax = pyo.Constraint(model.J, rule=peso_max_rule)
+
+    def b_x(m, i, j): return m.x[i] + m.dx[i] <= m.L_X[j] + m.M * (1 - m.V[i, j])
+    def b_y(m, i, j): return m.y[i] + m.dy[i] <= m.L_Y[j] + m.M * (1 - m.V[i, j])
+    def b_z(m, i, j): return m.z[i] + m.dz[i] <= m.L_Z[j] + m.M * (1 - m.V[i, j])
+    model.C_bx = pyo.Constraint(model.I, model.J, rule=b_x)
+    model.C_by = pyo.Constraint(model.I, model.J, rule=b_y)
+    model.C_bz = pyo.Constraint(model.I, model.J, rule=b_z)
+
+    def no_traslape(m, i, k, j): return (m.left[i,k] + m.right[i,k] + m.front[i,k] + m.back[i,k] + m.below[i,k] + m.above[i,k]) >= (m.V[i, j] + m.V[k, j] - 1)
+    model.C_NoTraslape = pyo.Constraint(model.Pares, model.J, rule=no_traslape)
+
+    def r_left(m, i, k):  return m.x[i] + m.dx[i] <= m.x[k] + m.M * (1 - m.left[i,k])
+    def r_right(m, i, k): return m.x[k] + m.dx[k] <= m.x[i] + m.M * (1 - m.right[i,k])
+    def r_front(m, i, k): return m.y[i] + m.dy[i] <= m.y[k] + m.M * (1 - m.front[i,k])
+    def r_back(m, i, k):  return m.y[k] + m.dy[k] <= m.y[i] + m.M * (1 - m.back[i,k])
+    def r_below(m, i, k): return m.z[i] + m.dz[i] <= m.z[k] + m.M * (1 - m.below[i,k])
+    def r_above(m, i, k): return m.z[k] + m.dz[k] <= m.z[i] + m.M * (1 - m.above[i,k])
+    model.C_left = pyo.Constraint(model.Pares, rule=r_left)
+    model.C_right = pyo.Constraint(model.Pares, rule=r_right)
+    model.C_front = pyo.Constraint(model.Pares, rule=r_front)
+    model.C_back = pyo.Constraint(model.Pares, rule=r_back)
+    model.C_below = pyo.Constraint(model.Pares, rule=r_below)
+    model.C_above = pyo.Constraint(model.Pares, rule=r_above)
+
+    def y_abs_min(m, i, j): return m.Y_abs[i] >= (m.Ycomp[j] + m.y[i] + (m.dy[i] / 2.0)) - m.M * (1 - m.V[i, j])
+    model.C_Yabs = pyo.Constraint(model.I, model.J, rule=y_abs_min)
+
+    def y_abs_zero(m, i):
+        return m.Y_abs[i] <= m.M * sum(m.V[i, j] for j in m.J)
+    model.C_Yabs_Zero = pyo.Constraint(model.I, rule=y_abs_zero)
+
+    def cg_min_rule(m): return sum(m.w[i] * m.Y_abs[i] for i in m.I) >= m.CG_min * sum(m.w[i] * m.V[i, j] for i in m.I for j in m.J)
+    model.C_CG_Min = pyo.Constraint(rule=cg_min_rule)
+
+    def cg_max_rule(m): return sum(m.w[i] * m.Y_abs[i] for i in m.I) <= m.CG_max * sum(m.w[i] * m.V[i, j] for i in m.I for j in m.J)
+    model.C_CG_Max = pyo.Constraint(rule=cg_max_rule)
+
+    # ------------------------------------------------------------------
+    # 5. RESOLUCIÓN Y EXPORTACIÓN JSON
+    # ------------------------------------------------------------------
+    solver = SolverFactory('cplex_direct') 
+    
+    print(f"Resolviendo optimización para {avion_seleccionado}...")
+    results = solver.solve(model, tee=False, options={'timelimit': 120})
+    
+    # 5.1 Recopilar datos de las cajas cargadas (Añadidas las dimensiones) y NO cargadas
+    cajas_cargadas = []
+    cajas_no_cargadas = []
+    
+    for i in model.I:
+        cargada = False
+        for j in model.J:
+            if pyo.value(model.V[i, j]) > 0.5:
+                cargada = True
+                cajas_cargadas.append({
+                    'id_caja': i, 'compartimiento': j,
+                    'x': pyo.value(model.x[i]), 
+                    'y': pyo.value(model.y[i]), 
+                    'z': pyo.value(model.z[i]),
+                    'dx': dict_dx[i], 
+                    'dy': dict_dy[i], 
+                    'dz': dict_dz[i], 
+                    'peso': dict_w[i],
+                    'valor': dict_val[i]
+                })
+        
+        # Si terminó el bucle de compartimientos y no se cargó, va a tierra
+        if not cargada:
+            cajas_no_cargadas.append({
+                'id_caja': i,
+                'dx': dict_dx[i], 
+                'dy': dict_dy[i], 
+                'dz': dict_dz[i], 
+                'peso': dict_w[i],
+                'valor': dict_val[i]
+            })
+                
+    # 5.2 Recopilar datos de los compartimientos para dibujarlos
+    compartimientos_info = []
+    for j in model.J:
+        compartimientos_info.append({
+            'id_comp': j,
+            'L_X': dict_LX[j],
+            'L_Y': dict_LY[j],
+            'L_Z': dict_LZ[j],
+            'Ycomp': dict_Ycomp[j]
+        })
+
+    # 5.3 Crear el objeto final y guardarlo como JSON
+    resultado_final = {
+        "avion": avion_seleccionado,
+        "valor_total_optimizado": pyo.value(model.Obj),
+        "compartimientos": compartimientos_info,
+        "cajas_cargadas": cajas_cargadas,
+        "cajas_no_cargadas": cajas_no_cargadas # SE ENVÍA AL FRONTEND
+    }
+
+    # Guardar en la misma carpeta del Jupyter Notebook
+    with open('interface/resultado_optimizacion.json', 'w') as f:
+        json.dump(resultado_final, f, indent=4)
+        
+    print("¡Resultados exportados a 'resultado_optimizacion.json' exitosamente!")
+    # ------------------------------------------------------------------
+    # 6. MOSTRAR RESULTADOS DETALLADOS EN PANTALLA
+    # ------------------------------------------------------------------
+    print(results)
+    print("\n" + "="*40)
+    print("DETALLE DE OPTIMIZACIÓN DE CARGA")
+    print("="*40)
+    print(f"Avión seleccionado: {avion_seleccionado}")
+    print(f"Valor Total Optimizado (Ganancia): {pyo.value(model.Obj):.2f}")
+    
+    print("\n--- CAJAS CARGADAS ---")
+    peso_cargado_total = 0
+    momento_cargado_total = 0
+    
+    for i in model.I:
+        for j in model.J:
+            if pyo.value(model.V[i, j]) > 0.5:
+                # Calculamos el momento para mostrar el CG real
+                peso_i = model.w[i]
+                pos_y_abs = pyo.value(model.Y_abs[i])
+                peso_cargado_total += peso_i
+                momento_cargado_total += peso_i * pos_y_abs
+                
+                print(f"Caja {i} -> Compartimiento: {j}")
+                print(f"  Posición: (x={pyo.value(model.x[i]):.1f}, y={pyo.value(model.y[i]):.1f}, z={pyo.value(model.z[i]):.1f})")
+    
+    if peso_cargado_total > 0:
+        cg_final = momento_cargado_total / peso_cargado_total
+        print(f"\nResumen de Balance:")
+        print(f"  Peso total cargado: {peso_cargado_total} unidades")
+        print(f"  Centro de Gravedad final: {cg_final:.2f} (Rango permitido: {model.CG_min.value} - {model.CG_max.value})")
+    
+    print("\n--- CAJAS EN TIERRA (No cargadas) ---")
+    cajas_en_tierra = [i for i in model.I if sum(pyo.value(model.V[i, j]) for j in model.J) < 0.5]
+    if not cajas_en_tierra:
+        print("  Ninguna. ¡Todas las cajas fueron cargadas!")
+    else:
+        for i in cajas_en_tierra:
+            print(f"  Caja {i} (Peso: {model.w[i]})")
+    print("="*40 + "\n")
+    return cajas_cargadas, pyo.value(model.Obj)
+
+# ==========================================
+# EJEMPLO DE USO
+# ==========================================
+if __name__ == '__main__':
+    cajas, valor = optimizar_carga_avion('inventario_de_cajas.csv', 'base_de_aviones.csv', 'AirbusA330')

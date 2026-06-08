@@ -1,0 +1,67 @@
+DOCENTE: Santos Carlos Huayta
+MATERIA: Optimización
+
+Rúbrica de Evaluación
+Criterio: Elaboración del informe
+
+Puntaje: 20 pts
+
+Escala de calificaciones
+
+20 - EXCELENTE
+
+Formato PAPER/PDF.
+Excelente detalle técnico.
+Organización impecable.
+Redacción clara.
+Imágenes de alta resolución y bien proporcionadas.
+Criterio: Defensa del proyecto
+
+Puntaje: 20 pts
+
+Escala de calificaciones
+
+20 - EXCELENTE
+
+Explica el modelo con lenguaje técnico preciso.
+Responde todas las preguntas de forma clara y acertada.
+Vocalización excelente.
+Criterio: Funcionalidad del proyecto
+
+Puntaje: 40 pts
+
+Escala de calificaciones
+
+40 - EXCELENTE
+
+Menús claros y guiados.
+Validación completa de entradas.
+Progreso y resultados mostrados con claridad.
+Los problemas funcionan perfectamente.
+Criterio: Documentación y pruebas
+
+Puntaje: 20 pts
+
+Escala de calificaciones
+
+20 - EXCELENTE
+
+Código bien comentado.
+Manual de usuario completo.
+Ejemplos funcionales para cada tipo de problema.
+Repositorio Git con historial claro.
+Entregables
+Código fuente completo en Python.
+Manual de usuario con ejemplos para cada tipo de problema.
+Informe técnico documentando la implementación y decisiones de diseño.
+Repositorio Git con historial de desarrollo.
+Ejemplos preconfigurados para demostración.
+
+Total de puntos: 100 pts
+
+Distribución:
+
+Elaboración del informe: 20 pts
+Defensa del proyecto: 20 pts
+Funcionalidad del proyecto: 40 pts
+Documentación y pruebas: 20 pts
