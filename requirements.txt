@@ -1,0 +1,7 @@
+# FlightLoad Optimizer — Dependencias Python
+# Instalar con: pip install -r requirements.txt
+
+pandas>=2.0
+pyomo>=6.7
+cplex>=22.1
+jupyter
