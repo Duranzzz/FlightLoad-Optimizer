@@ -58,7 +58,7 @@ def optimizar_carga_avion(ruta_cajas, ruta_aviones, avion_seleccionado):
     # Parámetros Globales
     model.CG_min = pyo.Param(initialize=cg_min_global)
     model.CG_max = pyo.Param(initialize=cg_max_global)
-    model.M = pyo.Param(initialize=50)
+    model.M = pyo.Param(initialize=100)
 
     model.V = pyo.Var(model.I, model.J, within=pyo.Binary)
     model.x = pyo.Var(model.I, within=pyo.NonNegativeReals)
@@ -110,9 +110,14 @@ def optimizar_carga_avion(ruta_cajas, ruta_aviones, avion_seleccionado):
     model.C_below = pyo.Constraint(model.Pares, rule=r_below)
     model.C_above = pyo.Constraint(model.Pares, rule=r_above)
 
-    def y_abs_min(m, i, j): return m.Y_abs[i] >= (m.Ycomp[j] + m.y[i] + (m.dy[i] / 2.0)) - m.M * (1 - m.V[i, j])
+    def y_abs_min(m, i, j): 
+        return m.Y_abs[i] >= (m.Ycomp[j] + m.y[i] + (m.dy[i] / 2.0)) - m.M * (1 - m.V[i, j])
     model.C_Yabs = pyo.Constraint(model.I, model.J, rule=y_abs_min)
 
+    def y_abs_max(m, i, j):
+        return m.Y_abs[i] <= (m.Ycomp[j] + m.y[i] + (m.dy[i] / 2.0)) + m.M * (1 - m.V[i, j])
+    model.C_Yabs_Max = pyo.Constraint(model.I, model.J, rule=y_abs_max)
+    
     def y_abs_zero(m, i):
         return m.Y_abs[i] <= m.M * sum(m.V[i, j] for j in m.J)
     model.C_Yabs_Zero = pyo.Constraint(model.I, rule=y_abs_zero)
@@ -234,4 +239,4 @@ def optimizar_carga_avion(ruta_cajas, ruta_aviones, avion_seleccionado):
 # EJEMPLO DE USO
 # ==========================================
 if __name__ == '__main__':
-    cajas, valor = optimizar_carga_avion('inventario_de_cajas.csv', 'base_de_aviones.csv', 'AirbusA330')
+    cajas, valor = optimizar_carga_avion('sources/inventario_de_cajas.csv', 'sources/base_de_aviones.csv', 'CessnaCaravan')
